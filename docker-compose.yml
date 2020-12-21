@@ -1,52 +1,58 @@
-version: '3.1'
+version: '3.3'
 
 services:
 
-  db:
-    image: mysql:5.7
-    restart: always
+  mysql:
+    image: mysql:8.0
     volumes:
-      - db_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
+    restart: always
     environment:
-      MYSQL_HOST: localhost
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpress
-      MYSQL_ROOT_PASSWORD: password
       MYSQL_PASSWORD: wordpress
-    networks:
-      - wp
+    volumes:
+      -  ./mysql:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 3002:80
 
   wordpress:
     depends_on:
-      - db
-    image: wordpress
+      - mysql
+    build:
+      dockerfile: ./docker/wordpress.Dockerfile
+      context: .
+    ports:
+      - "3001:80"
     restart: always
-    volumes:
-      - ./:/var/www/html/
-      - ./upload.ini:/usr/local/etc/php/conf.d/uploads.ini
     environment:
-      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress
-    ports:
-      - 80:80
-    networks:
-      - wp
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./plugins:/var/www/html/wp-content/plugins
 
-  phpmyadmin:
-    depends_on:
-      - db
-    image: phpmyadmin/phpmyadmin
+  guten-blocks:
+    build:
+      context: ./plugins/custom-blocks
+      dockerfile: ../../docker/guten-blocks.Dockerfile
+    volumes:
+      - ./plugins/custom-blocks/:/app
+      - /app/node_modules
     ports:
-      - 8080:80
-    environment:
-      PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: password
-    networks:
-      - wp
-
-networks:
-  wp:
+      - 3000:3000
 
 volumes:
-  db_data:
+  mysql_data: {}
