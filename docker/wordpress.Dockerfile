@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
 
 # WORDPRESS PLUGINS
 
+
 ENV ACF_VERSION 5.9.1
 ENV ACF_NAME advanced-custom-fields
 RUN curl -L "https://downloads.wordpress.org/plugin/${ACF_NAME}.${ACF_VERSION}.zip" -o "/tmp/${ACF_NAME}.zip"
